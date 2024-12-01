@@ -1,0 +1,230 @@
+local TPService = game:GetService('TeleportService')
+local Players = game:GetService('Players')
+
+-- UI Notification Setup
+local playerGui = game:GetService('Players').LocalPlayer:WaitForChild('PlayerGui')
+local notificationGui = Instance.new('ScreenGui')
+notificationGui.Name = 'NotificationGui'
+notificationGui.Parent = playerGui
+
+local activeNotifications = {}
+local currentStaffNotification = nil  -- Track current staff notification
+local NOTIFICATION_HEIGHT = 70
+
+local function updateNotificationPositions()
+    local maxNotifications = 4  -- Maximum number of notifications to show at once
+    
+    while #activeNotifications > maxNotifications do
+        local oldestNotif = table.remove(activeNotifications, 1)
+        oldestNotif:Destroy()
+    end
+    
+    for i, notif in ipairs(activeNotifications) do
+        local yOffset = (i - 1) * 80  -- 80 pixels between each notification
+        local targetPos = UDim2.new(1, -320, 0.8 - (yOffset / 1080), 0)  -- 1080 is assumed screen height
+        
+        game:GetService('TweenService'):Create(
+            notif,
+            TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+            {Position = targetPos}
+        ):Play()
+    end
+end
+
+local function removeNotification(notif)
+    for i, v in ipairs(activeNotifications) do
+        if v == notif then
+            table.remove(activeNotifications, i)
+            notif:Destroy()
+            break
+        end
+    end
+    updateNotificationPositions()
+end
+
+local function createNotification(title, message, color, duration, isStaffNotif)
+    if isStaffNotif and currentStaffNotification then
+        -- Update existing staff notification instead of creating new one
+        local titleText = currentStaffNotification:FindFirstChild("TitleText")
+        local messageText = currentStaffNotification:FindFirstChild("MessageText")
+        if titleText and messageText then
+            messageText.Text = message
+            return
+        end
+    end
+
+    local notifFrame = Instance.new('Frame')
+    notifFrame.Size = UDim2.new(0, 300, 0, 70)
+    notifFrame.Position = UDim2.new(1, 0, 0.8, 0)
+    notifFrame.BackgroundColor3 = color or Color3.fromRGB(25, 25, 25)
+    notifFrame.BackgroundTransparency = 0.1
+    notifFrame.BorderSizePixel = 0
+    notifFrame.Parent = notificationGui
+
+    local corner = Instance.new('UICorner')
+    corner.CornerRadius = UDim.new(0, 6)
+    corner.Parent = notifFrame
+
+    local icon = Instance.new('ImageLabel')
+    icon.Size = UDim2.new(0, 40, 0, 40)
+    icon.Position = UDim2.new(0, 10, 0.5, -20)
+    icon.Image = 'rbxassetid://95318076001416'
+    icon.BackgroundTransparency = 1
+    icon.Parent = notifFrame
+
+    local titleText = Instance.new('TextLabel')
+    titleText.Size = UDim2.new(1, -70, 0, 25)
+    titleText.Position = UDim2.new(0, 60, 0, 5)
+    titleText.Font = Enum.Font.GothamBold
+    titleText.Text = title
+    titleText.TextColor3 = Color3.new(1, 1, 1)
+    titleText.TextSize = 14
+    titleText.BackgroundTransparency = 1
+    titleText.TextXAlignment = Enum.TextXAlignment.Left
+    titleText.Parent = notifFrame
+
+    local messageText = Instance.new('TextLabel')
+    messageText.Size = UDim2.new(1, -70, 0, 35)
+    messageText.Position = UDim2.new(0, 60, 0, 30)
+    messageText.Font = Enum.Font.Gotham
+    messageText.Text = message
+    messageText.TextColor3 = Color3.new(0.9, 0.9, 0.9)
+    messageText.TextSize = 12
+    messageText.BackgroundTransparency = 1
+    messageText.TextXAlignment = Enum.TextXAlignment.Left
+    messageText.TextWrapped = true
+    messageText.Parent = notifFrame
+
+    table.insert(activeNotifications, notifFrame)
+    updateNotificationPositions()
+
+    local tweenService = game:GetService('TweenService')
+    
+    tweenService:Create(
+        notifFrame,
+        TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out),
+        {Position = UDim2.new(1, -320, 0.8, 0)}
+    ):Play()
+
+    if isStaffNotif then
+        if currentStaffNotification then
+            removeNotification(currentStaffNotification)
+        end
+        currentStaffNotification = notifFrame
+    end
+
+    task.delay(duration or 5, function()
+        if notifFrame and notifFrame.Parent then
+            tweenService:Create(
+                notifFrame,
+                TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+                {Position = UDim2.new(1, 20, notifFrame.Position.Y.Scale, 0)}
+            ):Play()
+            task.wait(0.3)
+            removeNotification(notifFrame)
+            if isStaffNotif and currentStaffNotification == notifFrame then
+                currentStaffNotification = nil
+            end
+        end
+    end)
+end
+
+local CustomBlacklist = {
+    "chasemaser",
+    "OrionYeets",
+    "lIllllllllllIllIIlll",
+    "AUW345678",
+    "GhostWxstaken",
+    "throughthewindow009",
+    "YT_GoraPlays",
+    "IllIIIIlllIlllIlIIII",
+    "celisnix",
+    "7SlyR",
+    "DoordashRP",
+    "IlIIIIIlIIIIIIIllI",
+    "lIIlIlIllllllIIlI",
+    "IllIIIIIIlllllIIlIlI",
+    "asapzyzz",
+    "WhyZev",
+    "sworduserpro332",
+    "Muscular_Gorilla",
+    "Typhoon_Kang"
+}
+
+-- Add a variable to track if staff was found
+local staffFound = false
+
+local function NotifyStaff(plr, det_type, addInfo)
+    staffFound = true
+    local message = "Staff member detected: @"..plr.Name.." ("..det_type..")"
+    if addInfo then message = message.."\nInfo: "..addInfo end
+    createNotification("⚠️ Staff Detected", message, Color3.fromRGB(255, 50, 50), 120, true)
+end
+
+local function CheckCustomBlacklist(plr)
+    if table.find(CustomBlacklist, plr.Name) then 
+        NotifyStaff(plr, "CustomBlacklist") 
+        return true
+    end
+    return false
+end
+
+local function CheckPermissions(plr)
+    local KnitGotten, KnitClient
+    repeat
+        KnitGotten, KnitClient = pcall(function()
+            return debug.getupvalue(require(game.Players.LocalPlayer.PlayerScripts.TS.knit).setup, 6)
+        end)
+        if KnitGotten then break end
+        task.wait()
+    until KnitGotten
+    repeat task.wait() until debug.getupvalue(KnitClient.Start, 1)
+    
+    if KnitClient.Controllers.PermissionController:isStaffMember(plr) then 
+        NotifyStaff(plr, "PermissionController") 
+        return true
+    end
+    return false
+end
+
+local function CheckPlayer(plr)
+    if plr == game.Players.LocalPlayer then return end
+    
+    pcall(function()
+        if CheckCustomBlacklist(plr) then return end
+        if CheckPermissions(plr) then return end
+    end)
+end
+
+local function CheckAllPlayers()
+    staffFound = false
+    for _, plr in pairs(Players:GetPlayers()) do
+        CheckPlayer(plr)
+    end
+    if not staffFound then
+        createNotification("Staff Detector", "No staff members detected", Color3.fromRGB(25, 25, 25))
+    end
+end
+game:GetService("Players").LocalPlayer.OnTeleport:Connect(function(State)
+    if State == Enum.TeleportState.Started then
+        syn.queue_on_teleport(queueScript)
+    end
+end)
+
+-- Initial check
+CheckAllPlayers()
+
+-- Check new players
+Players.PlayerAdded:Connect(function(plr)
+    CheckPlayer(plr)
+end)
+
+-- Periodic check every 10 seconds
+spawn(function()
+    while wait(10) do
+        CheckAllPlayers()
+    end
+end)
+
+createNotification("Staff Detector", "Now monitoring for staff members", Color3.fromRGB(25, 25, 25))
+print("Staff detector is now running!")
