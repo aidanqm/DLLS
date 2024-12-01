@@ -1,4 +1,4 @@
-task.wait(5) -- Wait for game to load
+
 
 local TPService = game:GetService("TeleportService")
 local Players = game:GetService("Players")
