@@ -1,10 +1,12 @@
-local TPService = game:GetService('TeleportService')
-local Players = game:GetService('Players')
+task.wait(5) -- Wait for game to load
+
+local TPService = game:GetService("TeleportService")
+local Players = game:GetService("Players")
 
 -- UI Notification Setup
-local playerGui = game:GetService('Players').LocalPlayer:WaitForChild('PlayerGui')
-local notificationGui = Instance.new('ScreenGui')
-notificationGui.Name = 'NotificationGui'
+local playerGui = game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui")
+local notificationGui = Instance.new("ScreenGui")
+notificationGui.Name = "NotificationGui"
 notificationGui.Parent = playerGui
 
 local activeNotifications = {}
@@ -21,9 +23,9 @@ local function updateNotificationPositions()
     
     for i, notif in ipairs(activeNotifications) do
         local yOffset = (i - 1) * 80  -- 80 pixels between each notification
-        local targetPos = UDim2.new(1, -320, 0.8 - (yOffset / 1080), 0)  -- 1080 is assumed screen height
+        local targetPos = UDim2.new(1, -320, 0.2 + (yOffset / 1080), 0)  -- Moved to top-right
         
-        game:GetService('TweenService'):Create(
+        game:GetService("TweenService"):Create(
             notif,
             TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
             {Position = targetPos}
@@ -53,26 +55,26 @@ local function createNotification(title, message, color, duration, isStaffNotif)
         end
     end
 
-    local notifFrame = Instance.new('Frame')
+    local notifFrame = Instance.new("Frame")
     notifFrame.Size = UDim2.new(0, 300, 0, 70)
-    notifFrame.Position = UDim2.new(1, 0, 0.8, 0)
+    notifFrame.Position = UDim2.new(1, 0, 0.2, 0)  -- Start from top-right
     notifFrame.BackgroundColor3 = color or Color3.fromRGB(25, 25, 25)
     notifFrame.BackgroundTransparency = 0.1
     notifFrame.BorderSizePixel = 0
     notifFrame.Parent = notificationGui
 
-    local corner = Instance.new('UICorner')
+    local corner = Instance.new("UICorner")
     corner.CornerRadius = UDim.new(0, 6)
     corner.Parent = notifFrame
 
-    local icon = Instance.new('ImageLabel')
+    local icon = Instance.new("ImageLabel")
     icon.Size = UDim2.new(0, 40, 0, 40)
     icon.Position = UDim2.new(0, 10, 0.5, -20)
-    icon.Image = 'rbxassetid://95318076001416'
+    icon.Image = "rbxassetid://95318076001416"
     icon.BackgroundTransparency = 1
     icon.Parent = notifFrame
 
-    local titleText = Instance.new('TextLabel')
+    local titleText = Instance.new("TextLabel")
     titleText.Size = UDim2.new(1, -70, 0, 25)
     titleText.Position = UDim2.new(0, 60, 0, 5)
     titleText.Font = Enum.Font.GothamBold
@@ -83,7 +85,7 @@ local function createNotification(title, message, color, duration, isStaffNotif)
     titleText.TextXAlignment = Enum.TextXAlignment.Left
     titleText.Parent = notifFrame
 
-    local messageText = Instance.new('TextLabel')
+    local messageText = Instance.new("TextLabel")
     messageText.Size = UDim2.new(1, -70, 0, 35)
     messageText.Position = UDim2.new(0, 60, 0, 30)
     messageText.Font = Enum.Font.Gotham
@@ -98,12 +100,12 @@ local function createNotification(title, message, color, duration, isStaffNotif)
     table.insert(activeNotifications, notifFrame)
     updateNotificationPositions()
 
-    local tweenService = game:GetService('TweenService')
+    local tweenService = game:GetService("TweenService")
     
     tweenService:Create(
         notifFrame,
         TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out),
-        {Position = UDim2.new(1, -320, 0.8, 0)}
+        {Position = UDim2.new(1, -320, 0.2, 0)}  -- Slide to top-right
     ):Play()
 
     if isStaffNotif then
@@ -148,6 +150,7 @@ local CustomBlacklist = {
     "WhyZev",
     "sworduserpro332",
     "Muscular_Gorilla",
+    "OndaClientontp",
     "Typhoon_Kang"
 }
 
@@ -158,7 +161,7 @@ local function NotifyStaff(plr, det_type, addInfo)
     staffFound = true
     local message = "Staff member detected: @"..plr.Name.." ("..det_type..")"
     if addInfo then message = message.."\nInfo: "..addInfo end
-    createNotification("⚠️ Staff Detected", message, Color3.fromRGB(255, 50, 50), 120, true)
+    createNotification("⚠️ Staff Detected", message, Color3.fromRGB(255, 50, 50), 30, true)
 end
 
 local function CheckCustomBlacklist(plr)
@@ -205,11 +208,12 @@ local function CheckAllPlayers()
         createNotification("Staff Detector", "No staff members detected", Color3.fromRGB(25, 25, 25))
     end
 end
-game:GetService("Players").LocalPlayer.OnTeleport:Connect(function(State)
-    if State == Enum.TeleportState.Started then
-        syn.queue_on_teleport(queueScript)
-    end
-end)
+
+-- Queue this script to run after teleport
+queue_on_teleport([[
+    task.wait(5)
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/YukileNeko/DLLS/main/staffdetect"))()
+]])
 
 -- Initial check
 CheckAllPlayers()
