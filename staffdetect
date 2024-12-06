@@ -1,5 +1,4 @@
-
-
+queue_on_teleport([[
 local TPService = game:GetService("TeleportService")
 local Players = game:GetService("Players")
 
@@ -209,12 +208,6 @@ local function CheckAllPlayers()
     end
 end
 
--- Queue this script to run after teleport
-queue_on_teleport([[
-    task.wait(5)
-    loadstring(game:HttpGet("https://raw.githubusercontent.com/YukileNeko/DLLS/main/staffdetect"))()
-]])
-
 -- Initial check
 CheckAllPlayers()
 
@@ -232,3 +225,4 @@ end)
 
 createNotification("Staff Detector", "Now monitoring for staff members", Color3.fromRGB(25, 25, 25))
 print("Staff detector is now running!")
+]])
