@@ -11,9 +11,10 @@ notificationGui.Name = "NotificationGui"
 local activeNotifications = {}
 local currentStaffNotification = nil
 local NOTIFICATION_HEIGHT = 70
+local staffDetected = false  -- Flag to track if staff has been detected
 
 local function updateNotificationPositions()
-    local maxNotifications = 4  -- Maximum number of notifications to show at once
+    local maxNotifications = 2  -- Maximum number of notifications to show at once
 
     while #activeNotifications > maxNotifications do
         local oldestNotif = table.remove(activeNotifications, 1)
@@ -67,7 +68,7 @@ local function createNotification(title, message, color, duration, isStaffNotif)
     local icon = Instance.new("ImageLabel")
     icon.Size = UDim2.new(0, 40, 0, 40)
     icon.Position = UDim2.new(0, 10, 0.5, -20)
-    icon.Image = "rbxassetid://95318076001416"
+    icon.Image = "rbxassetid://91062229871159"  -- Updated asset ID
     icon.BackgroundTransparency = 1
     icon.Parent = notifFrame
 
@@ -145,7 +146,6 @@ local CustomBlacklist = {
     "WhyZev",
     "sworduserpro332",
     "Muscular_Gorilla",
-    "OndaClientontp",
     "Typhoon_Kang"
 }
 
@@ -200,16 +200,18 @@ local function CheckAllPlayers()
     for _, plr in pairs(Players:GetPlayers()) do
         CheckPlayer(plr)
     end
-    if not staffFound then
-        createNotification("Staff Detector", "No staff members detected", Color3.fromRGB(25, 25, 25))
-    end
 end
 
 -- Initial check
 CheckAllPlayers()
 
 -- Check new players
-Players.PlayerAdded:Connect(CheckPlayer)
+Players.PlayerAdded:Connect(function(plr)
+    CheckPlayer(plr)
+    if staffFound then
+        createNotification("Staff Detector", "Staff member has joined!", Color3.fromRGB(255, 50, 50))
+    end
+end)
 
 -- Periodic check every 10 seconds
 task.spawn(function()
